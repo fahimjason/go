@@ -2,12 +2,14 @@ package render
 
 import (
 	"bytes"
+	"fmt"
 	"html/template"
 	"log"
 	"net/http"
 	"path/filepath"
 
 	"github.com/fahimjason/myapp/pkg/config"
+	"github.com/fahimjason/myapp/pkg/models"
 )
 
 // var functions = template.FuncMap{}
@@ -19,9 +21,14 @@ func NewTemplates(a *config.AppConfig) {
 	app = a
 }
 
+func AddDefaultData(td *models.TemplateData) *models.TemplateData {
+	return td
+}
+
 // RenderTemplate renders a template
-func RenderTemplate(w http.ResponseWriter, tmpl string) {
+func RenderTemplate(w http.ResponseWriter, tmpl string, td *models.TemplateData) {
 	var tc map[string]*template.Template
+
 	if app.UseCache {
 		// get template cache from the app config
 		tc = app.TemplateCache
@@ -37,7 +44,10 @@ func RenderTemplate(w http.ResponseWriter, tmpl string) {
 
 	buf := new(bytes.Buffer)
 
-	err := t.Execute(buf, nil)
+	td = AddDefaultData(td)
+
+	// _ = t.Execute(buf, td)
+	err := t.Execute(buf, td)
 	if err != nil {
 		log.Println(err)
 	}
@@ -45,7 +55,7 @@ func RenderTemplate(w http.ResponseWriter, tmpl string) {
 	// render the template
 	_, err = buf.WriteTo(w)
 	if err != nil {
-		log.Println(err)
+		fmt.Println("Error writing template to browser", err)
 	}
 }
 
